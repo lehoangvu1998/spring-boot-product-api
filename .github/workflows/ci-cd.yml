@@ -1,0 +1,68 @@
+# .github/workflows/ci-cd.yml
+
+name: Spring Boot CI/CD # Tên của workflow, sẽ hiển thị trên GitHub Actions
+
+on:
+  push:
+    branches:
+      - main # Kích hoạt workflow khi có push lên branch 'main'
+  pull_request:
+    branches:
+      - main # Kích hoạt workflow khi có Pull Request đến branch 'main'
+
+jobs:
+  build-and-test: # Job đầu tiên: Build và chạy Unit Tests
+    runs-on: ubuntu-latest # Chạy trên môi trường Ubuntu mới nhất
+
+    steps:
+      - name: Checkout code # Bước 1: Lấy mã nguồn từ repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 # Bước 2: Thiết lập môi trường Java Development Kit (JDK)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17' # Phiên bản JDK bạn đang dùng cho dự án
+          distribution: 'temurin' # Nhà phân phối JDK (có thể là 'adopt', 'zulu'...)
+
+      - name: Cache Maven packages # Bước 3: Cache các dependency của Maven để tăng tốc độ build
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build with Maven # Bước 4: Biên dịch và đóng gói ứng dụng thành file JAR
+        run: mvn -B package --file pom.xml
+
+      - name: Run Unit Tests # Bước 5: Chạy các bài kiểm tra đơn vị (Unit Tests)
+        run: mvn test --file pom.xml
+
+  build-and-push-docker-image: # Job thứ hai: Build và đẩy Docker Image lên Docker Hub
+    needs: build-and-test # Job này chỉ chạy khi job 'build-and-test' hoàn thành thành công
+    runs-on: ubuntu-latest
+    # Điều kiện: chỉ chạy khi có push lên branch 'main'
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code # Bước 1: Lấy mã nguồn từ repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub # Bước 2: Đăng nhập vào Docker Hub
+        uses: docker/login-action@v3
+        with:
+          # Lấy tên người dùng và token từ GitHub Secrets (sẽ thiết lập ở bước tiếp theo)
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push Docker image # Bước 3: Build Docker Image và đẩy lên Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: . # Đường dẫn đến Dockerfile (thường là thư mục hiện tại của dự án)
+          push: true # Cho phép đẩy image lên registry
+          tags: |
+            # Các tag cho Docker Image của bạn
+            # Thay <bruceleeee1703> bằng tên người dùng Docker Hub của bạn
+            # Thay <spring-boot-product-api> bằng tên repository GitHub của bạn (ví dụ: spring-boot-product-api)
+            <bruceleeee1703>/<spring-boot-product-api>:latest
+            <bruceleeee1703>/<spring-boot-product-api>:${{ github.sha }} # Tag theo SHA của commit hiện tại

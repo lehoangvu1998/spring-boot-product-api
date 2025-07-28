@@ -1,0 +1,74 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+log/
+
+# Package Files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/wrapper/maven-wrapper.jar # Giữ lại wrapper scripts, nhưng bỏ qua jar
+
+# Gradle
+.gradle/
+/build/
+*.gradle
+!gradle/wrapper/gradle-wrapper.jar # giữ lại Gradle wrapper jar nếu dùng Gradle
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+.project
+.settings/
+.classpath
+
+# Eclipse
+.metadata
+.project
+.classpath
+*.launch
+.settings/
+# STS (Spring Tool Suite)
+.apt_generated
+.springBeans
+
+# VS Code
+.vscode/
+
+# OS generated files
+.DS_Store
+.localized
+Thumbs.db
+Desktop.ini
+
+# Specific to Spring Boot
+# Các file tài nguyên tĩnh hoặc template đã biên dịch thường nằm trong target/
+# nhưng nếu bạn có các folder riêng không muốn commit thì thêm vào
+# Ví dụ: /src/main/resources/static/some_generated_files/
+
+# User specific configuration files
+# Cẩn thận với các file properties/yml chứa thông tin nhạy cảm
+# Ví dụ: application.properties, application.yml
+# Nếu có thông tin nhạy cảm (DB passwords, API keys), KHÔNG nên commit
+# Bạn nên dùng biến môi trường hoặc cấu hình bên ngoài cho môi trường production
+# Ví dụ: !/src/main/resources/application.properties # Bỏ dấu ! nếu muốn ignore
+
+# Nếu bạn có các biến môi trường cục bộ
+.env

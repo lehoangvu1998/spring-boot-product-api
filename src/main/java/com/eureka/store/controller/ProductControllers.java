@@ -26,7 +26,7 @@ public class ProductControllers {
     }
 
     @PostMapping("/create")
-    public String createProduct(@RequestBody List<ProductDTO> products) {
+    public boolean createProduct(@RequestBody List<ProductDTO> products) {
         return productServices.createProducts(products);
     }
 
@@ -41,7 +41,7 @@ public class ProductControllers {
     }
 
     @PostMapping("/update")
-    public String update(@RequestBody List<ProductDTO> products) {
+    public boolean update(@RequestBody List<ProductDTO> products) {
         return productServices.updateProducts(products);
     }
 

@@ -41,4 +41,12 @@ public class GlobalHandleExceptions {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotFoundException(ProductNotFoundException ex , WebRequest webRequest){
+        ErrorResponse response = new ErrorResponse(HttpStatus.NOT_FOUND.value(),
+                "Not Found Data By Id",
+                webRequest.getDescription(false));
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
 }

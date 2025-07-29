@@ -35,8 +35,8 @@ jobs:
       - name: Build with Maven # Bước 4: Biên dịch và đóng gói ứng dụng thành file JAR
         run: mvn -B package -Dspring.profiles.active=test --file pom.xml
 
-      - name: Run Unit Tests # Bước 5: Chạy các bài kiểm tra đơn vị (Unit Tests)
-        run: mvn test -Dspring.profiles.active=test --file pom.xml
+      #- name: Run Unit Tests # Bước 5: Chạy các bài kiểm tra đơn vị (Unit Tests)
+      #  run: mvn test -Dspring.profiles.active=test --file pom.xml
 
   build-and-push-docker-image: # Job thứ hai: Build và đẩy Docker Image lên Docker Hub
     needs: build-and-test # Job này chỉ chạy khi job 'build-and-test' hoàn thành thành công

@@ -1,6 +1,6 @@
 package com.eureka.store.exception;
 
-import com.eureka.store.dto.ErrorResponse;
+import com.eureka.store.message.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

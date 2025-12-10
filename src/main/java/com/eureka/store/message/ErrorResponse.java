@@ -1,4 +1,4 @@
-package com.eureka.store.dto;
+package com.eureka.store.message;
 
 import lombok.Getter;
 import lombok.Setter;

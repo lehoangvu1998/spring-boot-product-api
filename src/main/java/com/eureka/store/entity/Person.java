@@ -1,18 +1,23 @@
 package com.eureka.store.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Setter
-@Getter
+import java.sql.Timestamp;
+import java.util.List;
+
 @Entity
-@Table(name = "Users")
-public class User {
+@Table(name = "persons")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Person {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID")
-    private Integer id;
+    @Column(name = "person_id")
+    private Integer personid;
 
     @Column(name = "username")
     private String username;
@@ -39,7 +44,7 @@ public class User {
     private String middleName;
 
     @Column(name = "createdDate")
-    private String createdDate;
+    private Timestamp createdDate;
 
     @Column(name = "createdBy")
     private String createdBy;
@@ -48,11 +53,14 @@ public class User {
     private String modifiedBy;
 
     @Column(name = "dateModified")
-    private String dateModified;
+    private Timestamp dateModified;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")  // FK trong bảng Users
     private Account account;
+
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Payment> payment;
 
 }

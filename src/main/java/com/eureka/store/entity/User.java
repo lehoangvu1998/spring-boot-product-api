@@ -14,22 +14,45 @@ public class User {
     @Column(name = "ID")
     private Integer id;
 
-    @Column(name = "USER_NAME")
+    @Column(name = "username")
     private String username;
 
-    @Column(name = "PASSWORD")
+    @Column(name = "password")
     private String password;
 
-    @Column(name = "EMAIL")
+    @Column(name = "email")
     private String email;
 
-    @Column(name = "PHONE")
+    @Column(name = "phone")
     private String phone;
 
-    @Column(name = "ADDRESS")
+    @Column(name = "address")
     private String address;
 
-    @Column(name = "ROLE")
-    private String role;
+    @Column(name = "lastName")
+    private String lastname;
+
+    @Column(name = "firstName")
+    private String firstName;
+
+    @Column(name = "middleName")
+    private String middleName;
+
+    @Column(name = "createdDate")
+    private String createdDate;
+
+    @Column(name = "createdBy")
+    private String createdBy;
+
+    @Column(name = "modifiedBy")
+    private String modifiedBy;
+
+    @Column(name = "dateModified")
+    private String dateModified;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")  // FK trong bảng Users
+    private Account account;
 
 }

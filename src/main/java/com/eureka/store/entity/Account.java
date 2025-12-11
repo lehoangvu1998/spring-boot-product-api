@@ -9,10 +9,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "accounts")
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Builder
 public class Account {
     @Id

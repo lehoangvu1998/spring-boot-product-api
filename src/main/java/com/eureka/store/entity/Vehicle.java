@@ -7,10 +7,10 @@ import java.sql.Timestamp;
 
 @Entity
 @Table (name = "vehicles")
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Builder
 public class Vehicle {
 

@@ -8,10 +8,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "persons")
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Builder
 public class Person {
     @Id
@@ -62,5 +62,4 @@ public class Person {
 
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Payment> payment;
-
 }

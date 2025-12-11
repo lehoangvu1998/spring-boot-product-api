@@ -3,10 +3,10 @@ import lombok.*;
 
 import java.sql.Timestamp;
 
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Builder
 public class VehicleDTO {
 
@@ -28,4 +28,5 @@ public class VehicleDTO {
     private String modifiedBy;
     private Timestamp dateModified;
     private AccountDTO account;
+
 }

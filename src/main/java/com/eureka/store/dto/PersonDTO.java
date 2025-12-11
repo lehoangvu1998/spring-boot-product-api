@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 public class PersonDTO {
 
-    private Integer id;
+    private Integer personid;
     private String username;
     private String password;
     private String email;

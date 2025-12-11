@@ -6,10 +6,10 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Builder
 public class AccountDTO {
 

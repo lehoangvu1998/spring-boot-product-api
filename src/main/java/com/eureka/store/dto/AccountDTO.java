@@ -20,6 +20,6 @@ public class AccountDTO {
     private String createdBy;
     private String modifiedBy;
     private Timestamp dateModified;
-    private List<PersonDTO> users;
+    private List<PersonDTO> person;
     private List<VehicleDTO> vehicles;
 }

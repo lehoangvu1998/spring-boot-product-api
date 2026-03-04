@@ -1,5 +1,5 @@
 # Giai đoạn Build: Sử dụng một image OpenJDK với JDK để biên dịch ứng dụng
-FROM openjdk:17-jdk-slim as builder
+FROM eclipse-temurin:17-jre-jammy as builder
 
 # Đặt thư mục làm việc bên trong container
 WORKDIR /app
@@ -15,7 +15,7 @@ COPY src ./src
 RUN ./mvnw clean package -DskipTests
 
 # Giai đoạn Runtime: Sử dụng một image OpenJDK chỉ với JRE để chạy ứng dụng (nhỏ gọn hơn)
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre-jammy
 
 # Đặt thư mục làm việc cho ứng dụng chạy
 WORKDIR /app

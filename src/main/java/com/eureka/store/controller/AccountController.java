@@ -1,6 +1,7 @@
 package com.eureka.store.controller;
 
 import com.eureka.store.dto.AccountDTO;
+import com.eureka.store.entity.Account;
 import com.eureka.store.gateway.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +15,7 @@ public class AccountController {
     private IAccountService accountService;
 
     @PostMapping("/createAccount")
-    public boolean createAccount(@RequestBody AccountDTO accountDTO){
+    public AccountDTO createAccount(@RequestBody AccountDTO accountDTO){
         return accountService.createAccount(accountDTO);
     }
 }

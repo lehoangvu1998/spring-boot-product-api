@@ -61,8 +61,5 @@ jobs:
           context: . # Đường dẫn đến Dockerfile (thường là thư mục hiện tại của dự án)
           push: true # Cho phép đẩy image lên registry
           tags: |
-            # Các tag cho Docker Image của bạn
-            # Thay <bruceleeee1703> bằng tên người dùng Docker Hub của bạn
-            # Thay <spring-boot-product-api> bằng tên repository GitHub của bạn (ví dụ: spring-boot-product-api)
             <bruceleeee1703>/<spring-boot-product-api>:latest
             <bruceleeee1703>/<spring-boot-product-api>:${{ github.sha }} # Tag theo SHA của commit hiện tại

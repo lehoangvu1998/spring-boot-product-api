@@ -61,5 +61,5 @@ jobs:
           context: . # Đường dẫn đến Dockerfile (thường là thư mục hiện tại của dự án)
           push: true # Cho phép đẩy image lên registry
           tags: |
-            <bruceleeee1703>/<spring-boot-product-api>:latest
-            <bruceleeee1703>/<spring-boot-product-api>:${{ github.sha }} # Tag theo SHA của commit hiện tại
+            bruceleeee1703/spring-boot-product-api:latest
+            bruceleeee1703/spring-boot-product-api:${{ github.sha }}

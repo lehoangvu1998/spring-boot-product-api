@@ -26,6 +26,13 @@ public class OutBoxEvent {
     private String status;
     private int retryCount;
     private LocalDateTime nextRetryAt;
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
     private LocalDateTime lockedAt;
+    @Version
+    private Long version;
+    @PrePersist
+    protected void onCreate() {
+        createdDate = LocalDateTime.now();
+    }
+
 }

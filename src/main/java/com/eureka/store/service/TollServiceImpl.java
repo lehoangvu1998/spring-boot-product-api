@@ -95,12 +95,8 @@ public class TollServiceImpl implements ITollService {
 
     @Transactional
     public void updateOutboxStatus(Long outboxId, String status, Throwable ex) {
-        OutBoxEvent outbox = outBoxRepo.findById(outboxId).orElse(null);
-
-        if (outbox == null) {
-            log.error("Outbox not found with id: {}", outboxId);
-            return;
-        }
+        var outbox = outBoxRepo.findById(outboxId)
+                .orElseThrow(() -> new RuntimeException("Outbox not found with id: " + outboxId));
 
         if (STATUS_FAILED.equals(status)) {
             markFailed(outbox);
@@ -121,8 +117,11 @@ public class TollServiceImpl implements ITollService {
     }
 
     private Toll convertData(TollEvent input) {
-        Timestamp now = new Timestamp(System.currentTimeMillis());
 
+        if (input == null) {
+            throw new IllegalArgumentException("TollEvent cannot be null");
+        }
+        Timestamp now = new Timestamp(System.currentTimeMillis());
         return Toll.builder()
                 .transactionId(input.getTransactionId())
                 .licenseNumber(input.getLicenseNumber())

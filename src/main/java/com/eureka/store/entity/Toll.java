@@ -1,9 +1,7 @@
 package com.eureka.store.entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,6 +11,8 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Toll {
     @Id
     private String transactionId;
@@ -25,14 +25,4 @@ public class Toll {
     @Column (name = "created_By")
     private String createdBy;
 
-    public Toll() {
-    }
-
-    public Toll(String transactionId, String licenseNumber, BigDecimal amount, LocalDateTime createdDate, String createdBy) {
-        this.transactionId = transactionId;
-        licenseNumber = licenseNumber;
-        this.amount = amount;
-        this.createdDate = createdDate;
-        this.createdBy = createdBy;
-    }
 }

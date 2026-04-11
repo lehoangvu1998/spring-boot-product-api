@@ -17,7 +17,7 @@ public class Toll {
     @Id
     private String transactionId;
     @Column (name = "License_Number")
-    private String LicenseNumber;
+    private String licenseNumber;
     @Column (name = "amount")
     private BigDecimal amount;
     @Column (name = "created_Date")
@@ -30,7 +30,7 @@ public class Toll {
 
     public Toll(String transactionId, String licenseNumber, BigDecimal amount, LocalDateTime createdDate, String createdBy) {
         this.transactionId = transactionId;
-        LicenseNumber = licenseNumber;
+        licenseNumber = licenseNumber;
         this.amount = amount;
         this.createdDate = createdDate;
         this.createdBy = createdBy;

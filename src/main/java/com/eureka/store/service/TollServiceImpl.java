@@ -6,18 +6,24 @@ import com.eureka.store.entity.Toll;
 import com.eureka.store.gateway.ITollService;
 import com.eureka.store.repository.IOutBoxEventRepository;
 import com.eureka.store.repository.ITollRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Service
 public class TollServiceImpl implements ITollService {
+
+    private static final Logger log = LoggerFactory.getLogger(TollServiceImpl.class);
 
     private final IOutBoxEventRepository outBoxRepo;
 
@@ -26,6 +32,9 @@ public class TollServiceImpl implements ITollService {
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     private final ObjectMapper objectMapper;
+
+    @Value("${kafka.topic.toll-events}")
+    private String tollEventsTopic;
 
     @Autowired
     public TollServiceImpl(IOutBoxEventRepository outBoxRepo, ITollRepository tollRepo, KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
@@ -53,13 +62,18 @@ public class TollServiceImpl implements ITollService {
 
             publishToKafka(outbox, payload);
 
-        } catch (Exception ex){
-            throw new RuntimeException ("Process failed",  ex);
+        } catch (JsonProcessingException ex) {
+            log.error("Failed to serialize event: {}", event, ex);
+            throw new RuntimeException("Failed to process toll event", ex);
+        } catch (DataAccessException ex) {
+            log.error("Database error while processing toll event", ex);
+            throw new RuntimeException("Database operation failed", ex);
         }
     }
 
+    @Transactional
     private void publishToKafka(OutBoxEvent outbox, String payload) {
-        kafkaTemplate.send("toll-events", payload)
+        kafkaTemplate.send(tollEventsTopic, payload)
                 .whenComplete((result, ex) -> {
                     if (ex == null) {
                         outbox.setStatus("SENT");
@@ -81,7 +95,7 @@ public class TollServiceImpl implements ITollService {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         return Toll.builder()
                 .transactionId(input.getTransactionId())
-                .LicenseNumber(input.getLicenseNumber())
+                .licenseNumber(input.getLicenseNumber())
                 .amount(input.getAmount())
                 .createdBy("SYSTEM")
                 .createdDate(now.toLocalDateTime())

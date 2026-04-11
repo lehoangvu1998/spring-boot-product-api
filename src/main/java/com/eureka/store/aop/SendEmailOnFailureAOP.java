@@ -44,20 +44,20 @@ public class SendEmailOnFailureAOP {
             message.setTo("admin-tech@eureka.com");
             message.setSubject("CRITICAL: Kafka Service Failure Alert");
             String content = """
-    --- SYSTEM ALERT: KAFKA SEND FAILED ---
-    
-    Method     : %s
-    Arguments  : %s
-    Error      : %s
-    Timestamp  : %s
-    
-    ---------------------------------------
-    """.formatted(
-                    joinPoint.getSignature().toShortString(),
-                    Arrays.toString(joinPoint.getArgs()),
-                    ex.getMessage(),
-                    java.time.LocalDateTime.now()
-            );
+            --- SYSTEM ALERT: KAFKA SEND FAILED ---
+            
+            Method     : %s
+            Arguments  : %s
+            Error      : %s
+            Timestamp  : %s
+            
+            ---------------------------------------
+            """.formatted(
+                            joinPoint.getSignature().toShortString(),
+                            Arrays.toString(joinPoint.getArgs()),
+                            ex.getMessage(),
+                            java.time.LocalDateTime.now()
+                    );
             message.setText(content);
             mailSender.send(message);
             log.info("Alert email sent successfully to Admin.");

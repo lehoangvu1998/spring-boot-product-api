@@ -10,15 +10,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class TollServiceImpl implements ITollService {
@@ -26,18 +26,21 @@ public class TollServiceImpl implements ITollService {
     private static final Logger log = LoggerFactory.getLogger(TollServiceImpl.class);
 
     private final IOutBoxEventRepository outBoxRepo;
-
     private final ITollRepository tollRepo;
-
     private final KafkaTemplate<String, String> kafkaTemplate;
-
     private final ObjectMapper objectMapper;
 
-    @Value("${kafka.topic.toll-events}")
-    private String tollEventsTopic;
+    private final String tollEventsTopic = "toll-events";
 
-    @Autowired
-    public TollServiceImpl(IOutBoxEventRepository outBoxRepo, ITollRepository tollRepo, KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
+    private static final String STATUS_SENT = "SENT";
+    private static final String STATUS_FAILED = "FAILED";
+    private static final String EVENT_TYPE_TOLL = "TOLL_CREATED";
+    private static final String CREATED_BY = "SYSTEM";
+
+    public TollServiceImpl(IOutBoxEventRepository outBoxRepo,
+                           ITollRepository tollRepo,
+                           KafkaTemplate<String, String> kafkaTemplate,
+                           ObjectMapper objectMapper) {
         this.outBoxRepo = outBoxRepo;
         this.tollRepo = tollRepo;
         this.kafkaTemplate = kafkaTemplate;
@@ -48,56 +51,83 @@ public class TollServiceImpl implements ITollService {
     @Transactional
     public void processAndPublish(TollEvent event) {
         try {
-            // step 1 : save data to database
+            //  Step 1: Save business data
             tollRepo.save(convertData(event));
 
-            // step 2 : back-up data
+            // Step 2: Save outbox
             String payload = objectMapper.writeValueAsString(event);
+
+            String eventId = UUID.randomUUID().toString();
+
             OutBoxEvent outbox = new OutBoxEvent();
+            outbox.setEventId(eventId);
             outbox.setPayload(payload);
-            outbox.setEventType("TOLL_EVENT");
-            outBoxRepo.save(outbox);
+            outbox.setEventType(EVENT_TYPE_TOLL);
+            outbox.setStatus("PENDING");
 
-            // step 3 : publish Kafka
+            OutBoxEvent saved = outBoxRepo.saveAndFlush(outbox);
+            Long outboxId = saved.getId();
 
-            publishToKafka(outbox, payload);
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            kafkaTemplate.send(tollEventsTopic, eventId, payload)
+                                    .whenComplete((result, ex) -> {
+                                        updateOutboxStatus(
+                                                outboxId,
+                                                ex == null ? STATUS_SENT : STATUS_FAILED,
+                                                ex
+                                        );
+                                    });
+                        }
+                    }
+            );
 
         } catch (JsonProcessingException ex) {
             log.error("Failed to serialize event: {}", event, ex);
             throw new RuntimeException("Failed to process toll event", ex);
-        } catch (DataAccessException ex) {
-            log.error("Database error while processing toll event", ex);
-            throw new RuntimeException("Database operation failed", ex);
+        } catch (Exception ex) {
+            log.error("Unexpected error while processing toll event", ex);
+            throw new RuntimeException("Processing failed", ex);
         }
     }
 
     @Transactional
-    private void publishToKafka(OutBoxEvent outbox, String payload) {
-        kafkaTemplate.send(tollEventsTopic, payload)
-                .whenComplete((result, ex) -> {
-                    if (ex == null) {
-                        outbox.setStatus("SENT");
-                    } else {
-                        markFailed(outbox);
-                    }
-                    outBoxRepo.save(outbox);
-                });
+    public void updateOutboxStatus(Long outboxId, String status, Throwable ex) {
+        OutBoxEvent outbox = outBoxRepo.findById(outboxId).orElse(null);
+
+        if (outbox == null) {
+            log.error("Outbox not found with id: {}", outboxId);
+            return;
+        }
+
+        if (STATUS_FAILED.equals(status)) {
+            markFailed(outbox);
+            log.error("Kafka send failed for outboxId={}", outboxId, ex);
+        } else {
+            outbox.setStatus(STATUS_SENT);
+        }
+
+        outBoxRepo.save(outbox);
     }
 
-    private void markFailed (OutBoxEvent output){
-        output.setStatus("FAILED");
-        output.setRetryCount(output.getRetryCount() + 1 );
-        long delay = (long) Math.pow(2, output.getRetryCount()) * 5;
-        output.setNextRetryAt(LocalDateTime.now().plusSeconds(delay));
+    private void markFailed(OutBoxEvent outbox) {
+        outbox.setStatus(STATUS_FAILED);
+        outbox.setRetryCount(outbox.getRetryCount() + 1);
+
+        long delay = (long) Math.pow(2, outbox.getRetryCount()) * 5;
+        outbox.setNextRetryAt(LocalDateTime.now().plusSeconds(delay));
     }
 
-    private Toll convertData (TollEvent input) {
+    private Toll convertData(TollEvent input) {
         Timestamp now = new Timestamp(System.currentTimeMillis());
+
         return Toll.builder()
                 .transactionId(input.getTransactionId())
                 .licenseNumber(input.getLicenseNumber())
                 .amount(input.getAmount())
-                .createdBy("SYSTEM")
+                .createdBy(CREATED_BY)
                 .createdDate(now.toLocalDateTime())
                 .build();
     }

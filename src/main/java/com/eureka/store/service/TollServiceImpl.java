@@ -17,7 +17,6 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -29,6 +28,7 @@ public class TollServiceImpl implements ITollService {
     private final ITollRepository tollRepo;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final OutBoxService outBoxService;
 
     private final String tollEventsTopic = "toll-events";
 
@@ -40,11 +40,12 @@ public class TollServiceImpl implements ITollService {
     public TollServiceImpl(IOutBoxEventRepository outBoxRepo,
                            ITollRepository tollRepo,
                            KafkaTemplate<String, String> kafkaTemplate,
-                           ObjectMapper objectMapper) {
+                           ObjectMapper objectMapper, OutBoxService outBoxService) {
         this.outBoxRepo = outBoxRepo;
         this.tollRepo = tollRepo;
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
+        this.outBoxService = outBoxService;
     }
 
     @Override
@@ -65,7 +66,7 @@ public class TollServiceImpl implements ITollService {
             outbox.setEventType(EVENT_TYPE_TOLL);
             outbox.setStatus("PENDING");
 
-            OutBoxEvent saved = outBoxRepo.saveAndFlush(outbox);
+            OutBoxEvent saved = outBoxRepo.save(outbox);
             Long outboxId = saved.getId();
 
             TransactionSynchronizationManager.registerSynchronization(
@@ -73,13 +74,11 @@ public class TollServiceImpl implements ITollService {
                         @Override
                         public void afterCommit() {
                             kafkaTemplate.send(tollEventsTopic, eventId, payload)
-                                    .whenComplete((result, ex) -> {
-                                        updateOutboxStatus(
-                                                outboxId,
-                                                ex == null ? STATUS_SENT : STATUS_FAILED,
-                                                ex
-                                        );
-                                    });
+                                    .whenComplete((result, ex) -> outBoxService.updateOutboxStatus(
+                                    outboxId,
+                                    ex == null ? STATUS_SENT : STATUS_FAILED,
+                                    ex
+                            ));
                         }
                     }
             );
@@ -91,29 +90,6 @@ public class TollServiceImpl implements ITollService {
             log.error("Unexpected error while processing toll event", ex);
             throw new RuntimeException("Processing failed", ex);
         }
-    }
-
-    @Transactional
-    public void updateOutboxStatus(Long outboxId, String status, Throwable ex) {
-        var outbox = outBoxRepo.findById(outboxId)
-                .orElseThrow(() -> new RuntimeException("Outbox not found with id: " + outboxId));
-
-        if (STATUS_FAILED.equals(status)) {
-            markFailed(outbox);
-            log.error("Kafka send failed for outboxId={}", outboxId, ex);
-        } else {
-            outbox.setStatus(STATUS_SENT);
-        }
-
-        outBoxRepo.save(outbox);
-    }
-
-    private void markFailed(OutBoxEvent outbox) {
-        outbox.setStatus(STATUS_FAILED);
-        outbox.setRetryCount(outbox.getRetryCount() + 1);
-
-        long delay = (long) Math.pow(2, outbox.getRetryCount()) * 5;
-        outbox.setNextRetryAt(LocalDateTime.now().plusSeconds(delay));
     }
 
     private Toll convertData(TollEvent input) {

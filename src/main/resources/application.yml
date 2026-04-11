@@ -1,0 +1,25 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+  kafka:
+    producer:
+      # Kích hoạt tính năng Idempotence
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+      # 1. Bật Idempotence (Từ Kafka 3.0+ nó mặc định là true, nhưng nên ghi rõ)
+      properties:
+        enable.idempotence: true
+
+      # 2. Các cấu hình bắt buộc đi kèm khi bật idempotence:
+      # Phải đợi xác nhận từ tất cả bản sao (ISR) để đảm bảo không mất message
+      acks: all
+
+      # Số lần thử lại tối đa (Nên để số lớn, vì idempotence sẽ lo việc trùng lặp)
+      retries: 2147483647
+
+      # Số lượng yêu cầu tối đa chưa được xác nhận trên một kết nối
+      # Phải <= 5 để đảm bảo thứ tự tin nhắn (Ordering)
+      max.in.flight.requests.per.connection: 5

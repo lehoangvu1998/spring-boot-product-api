@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -35,6 +36,7 @@ public class TollServiceImpl implements ITollService {
     }
 
     @Override
+    @Transactional
     public void processAndPublish(TollEvent event) {
         try {
             // step 1 : save data to database
@@ -49,19 +51,23 @@ public class TollServiceImpl implements ITollService {
 
             // step 3 : publish Kafka
 
-            kafkaTemplate.send("toll-events", payload)
-                    .whenComplete((result, i ) -> {
-                       if (Objects.nonNull(i)){
-                           outbox.setStatus("SENT");
-                       } else {
-                           markFailed(outbox);
-                       }
-                        outBoxRepo.save(outbox);
-                    });
+            publishToKafka(outbox, payload);
 
         } catch (Exception ex){
             throw new RuntimeException ("Process failed",  ex);
         }
+    }
+
+    private void publishToKafka(OutBoxEvent outbox, String payload) {
+        kafkaTemplate.send("toll-events", payload)
+                .whenComplete((result, ex) -> {
+                    if (ex == null) {
+                        outbox.setStatus("SENT");
+                    } else {
+                        markFailed(outbox);
+                    }
+                    outBoxRepo.save(outbox);
+                });
     }
 
     private void markFailed (OutBoxEvent output){

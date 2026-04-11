@@ -2,6 +2,17 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  mail:
+    host: smtp.gmail.com
+    port: 5858
+    username: your-email@gmail.com
+    password: your-app-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   kafka:
     producer:
       # Kích hoạt tính năng Idempotence

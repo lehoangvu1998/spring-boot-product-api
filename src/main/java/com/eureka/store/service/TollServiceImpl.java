@@ -74,15 +74,6 @@ public class TollServiceImpl implements ITollService {
         }
     }
 
-    private OutBoxEvent createOutboxEntry(String eventId, String payload) {
-        OutBoxEvent outbox = new OutBoxEvent();
-        outbox.setEventId(eventId);
-        outbox.setPayload(payload);
-        outbox.setEventType(EVENT_TYPE_TOLL);
-        outbox.setStatus(STATUS_PENDING);
-        return outbox;
-    }
-
     private void registerKafkaSynchronization(Long outboxId, String eventId, String payload) {
         TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
@@ -97,6 +88,15 @@ public class TollServiceImpl implements ITollService {
                     }
                 }
         );
+    }
+
+    private OutBoxEvent createOutboxEntry(String eventId, String payload) {
+        return OutBoxEvent.builder()
+                .eventId(eventId)
+                .payload(payload)
+                .eventType(EVENT_TYPE_TOLL)
+                .status(STATUS_PENDING)
+                .retryCount(0).build() ;
     }
 
     private Toll convertData(TollEvent input) {
